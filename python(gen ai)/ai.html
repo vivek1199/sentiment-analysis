@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative AI Sentiment Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .sentiment-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .sentiment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .analyze-btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            transition: all 0.3s ease;
+        }
+        .analyze-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+        }
+        .typing-animation {
+            display: inline-block;
+            overflow: hidden;
+            border-right: 2px solid #667eea;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: 2px;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #667eea }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4 typing-animation">AI Sentiment Analysis Tool</h1>
+            <p class="text-lg text-gray-600">Powered by simulated generative AI to analyze text sentiment</p>
+        </header>
+
+        <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Input Section -->
+            <div class="lg:col-span-2 bg-white rounded-xl p-6 sentiment-card">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Enter Your Text</h2>
+                <textarea id="inputText" rows="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type or paste your text here for sentiment analysis..."></textarea>
+                
+                <div class="flex flex-wrap gap-4 mt-4">
+                    <button id="analyzeBtn" class="analyze-btn text-white px-6 py-3 rounded-lg font-medium">
+                        Analyze Sentiment
+                    </button>
+                    <button id="sampleBtn" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300">
+                        Load Sample Text
+                    </button>
+                    <button id="clearBtn" class="text-gray-500 px-6 py-3 rounded-lg font-medium hover:bg-gray-100">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-white rounded-xl p-6 sentiment-card flex flex-col">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Analysis Results</h2>
+                
+                <!-- Visual Indicator -->
+                <div class="flex-1 flex flex-col justify-center">
+                    <div id="sentimentIndicator" class="relative h-8 bg-gray-200 rounded-full mb-6 overflow-hidden">
+                        <div id="sentimentBar" class="absolute h-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 transition-all duration-1000" style="width: 50%;"></div>
+                    </div>
+                    
+                    <!-- Emotional Response Visualization -->
+                    <div class="text-center mb-6">
+                        <canvas id="emotionChart" height="150"></canvas>
+                    </div>
+                    
+                    <!-- Detailed Results -->
+                    <div id="sentimentResult" class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-center mb-4">
+                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/11ee8e85-b3bf-47dc-bf10-ca853625c835.png" alt="Neutral facial expression with balanced emotional indicators, representing neutral sentiment analysis result" class="mx-auto mb-2 rounded-full" />
+                            <span id="overallSentiment" class="rounded-full px-4 py-1 bg-gray-200 text-gray-700">Neutral</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Sentiment Score:</span>
+                                <span id="sentimentScore" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Confidence:</span>
+                                <span id="confidenceScore" class="font-medium">0%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Text Length:</span>
+                                <span id="textLength" class="font-medium">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Feedback -->
+                <div id="aiFeedback" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <h3 class="text-lg font-medium text-blue-800 mb-2">AI Insights</h3>
+                    <p id="aiFeedbackText" class="text-blue-700">Submit some text to receive generative feedback and analysis from our AI model.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="max-w-4xl mx-auto mt-12 bg-white rounded-xl p-6 sentiment-card">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">How This Sentiment Analysis Works</h2>
+            <div class="grid md:grid-cols-3 gap-6 text-center">
+                <div class="p-4">
+                    <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <h3 class="font-medium text-gray-800 mb-2">Text Processing</h3>
+                    <p class="text-gray-600 text-sm">The AI breaks down your text into tokens and analyzes each component for emotional cues.</p>
+                </div>
+                <div class="p-4">
+                    <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <h3 class="font-medium text-gray-800 mb-2">Sentiment Scoring</h3>
+                    <p class="text-gray-600 text-sm">A statistical model assigns numerical scores based on the detected positivity, negativity, and emotional intensity.</p>
+                </div>
+                <div class="p-4">
+                    <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-medium text-gray-800 mb-2">Generative Insights</h3>
+                    <p class="text-gray-600 text-sm">The AI generates contextual explanations and suggestions based on the analysis results.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample training data from a theoretical Python sentiment model
+        const sentimentModel = {
+            analyze: function(text) {
+                // Simulate a machine learning model analyzing the text
+                const length = text.length;
+                const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
+                
+                // Calculate sentiment score (-1 to 1)
+                let baseScore = 0;
+                const positiveWords = ['happy', 'love', 'great', 'wonderful', 'excellent', 'joy', 'pleasure', 'delight'];
+                const negativeWords = ['sad', 'hate', 'terrible', 'awful', 'horrible', 'pain', 'suffering', 'disappointment'];
+                
+                positiveWords.forEach(word => {
+                    if (text.toLowerCase().includes(word)) baseScore += 0.15;
+                });
+                
+                negativeWords.forEach(word => {
+                    if (text.toLowerCase().includes(word)) baseScore -= 0.15;
+                });
+                
+                // Add some randomness to make it feel more real
+                baseScore += (Math.random() * 0.2 - 0.1);
+                baseScore = Math.max(-1, Math.min(1, baseScore));
+                
+                // Calculate confidence based on text length and presence of emotional words
+                const confidence = Math.min(100, 20 + 
+                    (Math.abs(baseScore) * 40) + 
+                    (length / 50) + 
+                    ((positiveWords.some(w => text.includes(w)) || negativeWords.some(w => text.includes(w))) ? 20 : 0)
+                );
+                
+                // Generate emotional breakdown
+                const emotions = {
+                    joy: Math.max(0, baseScore * 1000 + Math.random() * 20),
+                    sadness: Math.max(0, -baseScore * 500 + Math.random() * 20),
+                    anger: Math.max(0, (-baseScore * 200 * (text.toUpperCase() === text ? 2 : 1)) + Math.random() * 15),
+                    surprise: 10 + Math.random() * 15,
+                    trust: 30 + baseScore * 30 + Math.random() * 20
+                };
+                
+                // Generate AI feedback
+                let feedback = "";
+                if (baseScore > 0.5) {
+                    feedback = "This text expresses strongly positive sentiment. The language contains multiple positive emotional cues, suggesting enthusiasm and satisfaction.";
+                } else if (baseScore > 0.2) {
+                    feedback = "The sentiment is positive overall. The tone appears favorable and constructive with several optimistic expressions.";
+                } else if (baseScore > -0.2) {
+                    feedback = "The sentiment is relatively neutral. The language is balanced without strong positive or negative bias.";
+                } else if (baseScore > -0.5) {
+                    feedback = "Some negative sentiment is detected. There are indications of dissatisfaction or concern in the language used.";
+                } else {
+                    feedback = "Strong negative sentiment detected. The text contains multiple expressions of dissatisfaction, frustration, or disappointment.";
+                }
+                
+                // Add length-based feedback
+                if (wordCount < 10) {
+                    feedback += " The text is quite brief, so confidence in the analysis is somewhat limited.";
+                } else if (wordCount > 50) {
+                    feedback += " The detailed content provides more context for accurate sentiment analysis.";
+                }
+                
+                return {
+                    score: baseScore,
+                    confidence: confidence,
+                    emotions: emotions,
+                    feedback: feedback,
+                    length: length,
+                    wordCount: wordCount
+                };
+            }
+        };
+
+        // Chart initialization
+        let emotionChart;
+        function initChart() {
+            const ctx = document.getElementById('emotionChart').getContext('2d');
+            emotionChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Joy', 'Sadness', 'Anger', 'Surprise', 'Trust'],
+                    datasets: [{
+                        label: 'Emotional Intensity',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(99, 102, 241, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update chart with new data
+        function updateChart(emotions) {
+            emotionChart.data.datasets[0].data = [
+                emotions.joy,
+                emotions.sadness,
+                emotions.anger,
+                emotions.surprise,
+                emotions.trust
+            ];
+            emotionChart.update();
+        }
+
+        // Update sentiment indicator
+        function updateSentimentIndicator(score) {
+            const bar = document.getElementById('sentimentBar');
+            // Convert score from -1 to 1 to 0% to 100%
+            const percentage = ((score + 1) / 2) * 100;
+            bar.style.width = `${percentage}%`;
+            
+            // Update color based on sentiment
+            if (score > 0.3) {
+                bar.classList.remove('bg-gradient-to-r');
+                bar.classList.remove('from-red-400', 'via-yellow-400', 'to-green-500');
+                bar.classList.add('bg-gradient-to-r', 'from-green-300', 'to-green-500');
+            } else if (score > -0.3) {
+                bar.classList.remove('bg-gradient-to-r');
+                bar.classList.remove('from-red-400', 'via-yellow-400', 'to-green-500');
+                bar.classList.add('bg-gradient-to-r', 'from-yellow-300', 'to-yellow-500');
+            } else {
+                bar.classList.remove('bg-gradient-to-r');
+                bar.classList.remove('from-red-400', 'via-yellow-400', 'to-green-500');
+                bar.classList.add('bg-gradient-to-r', 'from-red-300', 'to-red-500');
+            }
+        }
+
+        // Update sentiment result display
+        function updateSentimentResult(result) {
+            document.getElementById('sentimentScore').textContent = result.score.toFixed(2);
+            document.getElementById('confidenceScore').textContent = `${Math.round(result.confidence)}%`;
+            document.getElementById('textLength').textContent = `${result.wordCount} words`;
+            document.getElementById('aiFeedbackText').textContent = result.feedback;
+            
+            // Update overall sentiment label
+            const sentimentLabel = document.getElementById('overallSentiment');
+            let sentimentText = '';
+            let sentimentColor = '';
+            
+            if (result.score > 0.5) {
+                sentimentText = 'Very Positive';
+                sentimentColor = 'bg-green-100 text-green-800';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/77ce71f7-b606-42d8-a9c9-259a5a764a0a.png';
+                document.querySelector('#sentimentResult img').alt = 'Smiling face with smiling eyes, representing very positive sentiment';
+            } else if (result.score > 0.2) {
+                sentimentText = 'Positive';
+                sentimentColor = 'bg-green-50 text-green-700';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/5827e31b-eb5b-4a9e-995c-2fcd9ceef682.png';
+                document.querySelector('#sentimentResult img').alt = 'Smiling face, representing positive sentiment';
+            } else if (result.score > -0.2) {
+                sentimentText = 'Neutral';
+                sentimentColor = 'bg-gray-100 text-gray-700';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e9e51d31-8b0c-4c27-94fd-19308c273ac8.png';
+                document.querySelector('#sentimentResult img').alt = 'Neutral face with straight mouth, representing neutral sentiment';
+            } else if (result.score > -0.5) {
+                sentimentText = 'Negative';
+                sentimentColor = 'bg-red-50 text-red-700';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e6f1c633-539a-4e24-bcf1-ab1eed18fc69.png';
+                document.querySelector('#sentimentResult img').alt = 'Slightly frowning face, representing negative sentiment';
+            } else {
+                sentimentText = 'Very Negative';
+                sentimentColor = 'bg-red-100 text-red-800';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e548f457-7d58-49df-9c3d-8b8e50c1341e.png';
+                document.querySelector('#sentimentResult img').alt = 'Angry face with furrowed brow, representing very negative sentiment';
+            }
+            
+            sentimentLabel.textContent = sentimentText;
+            sentimentLabel.className = `rounded-full px-4 py-1 font-medium ${sentimentColor}`;
+            
+            // Update chart with emotional breakdown
+            updateChart(result.emotions);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            
+            document.getElementById('analyzeBtn').addEventListener('click', function() {
+                const text = document.getElementById('inputText').value.trim();
+                if (text.length === 0) {
+                    alert('Please enter some text to analyze.');
+                    return;
+                }
+                
+                const result = sentimentModel.analyze(text);
+                updateSentimentIndicator(result.score);
+                updateSentimentResult(result);
+            });
+            
+            document.getElementById('sampleBtn').addEventListener('click', function() {
+                const samples = [
+                    "I absolutely love this product! It has completely changed my life for the better and I can't imagine going back to how things were before. The quality is outstanding and worth every penny.",
+                    "This was the worst experience I've ever had. The service was terrible, the product broke immediately, and the customer support was unhelpful and rude. I want my money back!",
+                    "The conference was informative with several interesting speakers. Some presentations were more engaging than others, but overall it was a valuable learning experience that met my expectations.",
+                    "Thrilled to announce our new partnership! This collaboration will bring innovative solutions to market faster and benefit all our customers. The future looks bright!",
+                    "I'm extremely disappointed with the recent changes. The new policy makes no sense and will hurt more people than it helps. This is not what we were promised."
+                ];
+                
+                const randomSample = samples[Math.floor(Math.random() * samples.length)];
+                document.getElementById('inputText').value = randomSample;
+            });
+            
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                document.getElementById('inputText').value = '';
+                updateSentimentIndicator(0);
+                document.getElementById('sentimentScore').textContent = '0';
+                document.getElementById('confidenceScore').textContent = '0%';
+                document.getElementById('textLength').textContent = '0';
+                document.getElementById('aiFeedbackText').textContent = 'Submit some text to receive generative feedback and analysis from our AI model.';
+                emotionChart.data.datasets[0].data = [0, 0, 0, 0, 0];
+                emotionChart.update();
+                
+                document.getElementById('overallSentiment').textContent = 'Neutral';
+                document.getElementById('overallSentiment').className = 'rounded-full px-4 py-1 bg-gray-200 text-gray-700';
+                document.querySelector('#sentimentResult img').src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e61c1b60-9cf0-4804-84db-751c670b9bbc.png';
+                document.querySelector('#sentimentResult img').alt = 'Neutral facial expression with balanced emotional indicators, representing neutral sentiment analysis result';
+            });
+        });
+    </script>
+</body>
+</html>
